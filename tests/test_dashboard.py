@@ -143,10 +143,36 @@ const localFailure = {type:'search_failed',data:{agent:'worker',backend:'hybrid'
 assert.equal(derive([search,localFailure]).apiUnconfirmed,false);
 const candidateFailure = {...localFailure,data:{...localFailure.data,backend:'decisions'}};
 assert.equal(derive([search,candidateFailure]).apiUnconfirmed,false);
+const snap = {type:'tests_snapshot',data:{files:3}};
+const failRun = {type:'check_run',data:{agent:'worker',kind:'test',command:'npm test',exit_code:1,duration_ms:40,failed_tests:['a > b'],override:null}};
+const fullRun = {type:'check_run',data:{agent:'worker',kind:'full',command:'npm run check',exit_code:0,duration_ms:900,failed_tests:[],override:'new idea'}};
+const refused = {type:'check_refused',data:{agent:'worker',kind:'test',command:'npm test',reasons:['Stop rule']}};
+const checked = derive([assigned,snap,failRun,fullRun,refused]);
+assert.equal(checked.snapshotFiles,3);
+assert.deepEqual(checked.checks.map(c=>c.status),['fail','pass','refused']);
+assert.equal(checked.green,2);
+assert.equal(checked.refused,1);
+assert.equal(checked.overrides,1);
+assert.equal(checked.agents.get('worker').checks,2);
+assert.equal(checked.agents.get('worker').stage,'assigned');
+assert.equal(eventTone(failRun),'fail');
+assert.equal(eventTone(refused),'warn');
+assert.equal(eventTitle(fullRun),'Check passed · full · override');
+assert.match(eventText(refused),/Stop rule/);
+const timeout = {type:'check_run',data:{kind:'test',command:'x',exit_code:124}};
+assert.equal(derive([timeout]).checks[0].status,'timeout');
 """
         result = subprocess.run([shutil.which('node'), '-e', code + assertions],
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_snapshot_carries_run_budget_limits_when_set(self):
+        self.assertEqual(build_snapshot(self.store, self.task)['budgets'], {})
+        self.store.assign(self.task, 'worker', 'backend', 'Goal', ['src'], 'Контекст', backend='lexical',
+                          budget={'max_runs': 5})
+        budgets = build_snapshot(self.store, self.task)['budgets']
+        self.assertEqual(budgets['worker']['max_runs'], 5)
+        self.assertEqual(budgets['worker']['max_after_green'], 1)
 
     def test_unknown_task_rejected_before_server_binds(self):
         with self.assertRaises(ValueError):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -13,7 +14,14 @@ def build_snapshot(store, task):
     with store.connect() as con:
         counts = {row[0]: row[1] for row in con.execute(
             "SELECT status,COUNT(*) FROM memories GROUP BY status")}
+        try:  # Read-only: the budgets table exists only once a run budget was set.
+            budgets = {row["agent"]: {k: row[k] for k in ("max_runs", "max_after_green",
+                                                          "max_fail_streak", "max_overrides")}
+                       for row in con.execute("SELECT * FROM budgets WHERE task_id=?", (task,))}
+        except sqlite3.OperationalError:
+            budgets = {}
     snapshot.update(
+        budgets=budgets,
         events=store.events(task),
         memory_stats={"total": sum(counts.values()), "verified": counts.get("verified", 0),
                       "proposed": counts.get("proposed", 0)},
