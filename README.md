@@ -25,12 +25,12 @@ Python 3.10+, standard library only. The same state and protocol serve the CLI, 
 
 ## Install
 
-Replace `OWNER/REPO` with the GitHub repository that hosts this code.
+The commands below install from [`dimqsh/context-harness`](https://github.com/dimqsh/context-harness).
 
 ### Claude Code plugin
 
 ```bash
-claude plugin marketplace add OWNER/REPO
+claude plugin marketplace add dimqsh/context-harness
 ```
 
 ```bash
@@ -43,7 +43,7 @@ This installs the skill, the MCP server (started as `python3 …/ch.py mcp`, so 
 ### Codex plugin
 
 ```bash
-codex plugin marketplace add OWNER/REPO
+codex plugin marketplace add dimqsh/context-harness
 ```
 
 ```bash
@@ -61,7 +61,7 @@ calls that need approval; the skill's CLI path (`scripts/ch.py`) does not depend
 For agents that read `SKILL.md` and have a shell. Clone the repository, then preview and apply:
 
 ```bash
-git clone https://github.com/OWNER/REPO context-harness
+git clone https://github.com/dimqsh/context-harness context-harness
 ```
 
 ```bash
@@ -91,7 +91,7 @@ exposes only `guard`, `search` and `checkpoint` and cannot run commands or write
 ### pip
 
 ```bash
-pip install "git+https://github.com/OWNER/REPO"
+pip install "git+https://github.com/dimqsh/context-harness"
 ```
 
 This gives the `context-harness` CLI and the `context-harness-mcp` server. The package carries the skill
