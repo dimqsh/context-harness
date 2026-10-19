@@ -98,8 +98,24 @@ def compact_budget(state):
     return out
 
 
+# Tool caches change on every test run without any code change. Without this list an
+# identical rerun was never recognised where they are not gitignored (e.g. a CI runner that
+# writes __pycache__ next to the tests).
+CACHE_DIRS = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".hypothesis",
+                        ".tox", ".nox", ".cache", ".parcel-cache", ".turbo", ".vitest", ".nyc_output",
+                        "htmlcov", "node_modules"})
+CACHE_SUFFIXES = (".pyc", ".pyo", ".tsbuildinfo")
+
+
+def is_cache_path(relative):
+    parts = relative.split("/")
+    name = parts[-1]
+    return (any(part in CACHE_DIRS for part in parts[:-1]) or name.endswith(CACHE_SUFFIXES)
+            or name == ".coverage" or name.startswith(".coverage.") or name == ".DS_Store")
+
+
 def fingerprint(root, exclude=None):
-    """Hash of tracked changes plus untracked files; None outside git (no redundancy check)."""
+    """Hash of tracked changes plus untracked non-cache files; None outside git (no redundancy check)."""
     try:
         diff = subprocess.run(["git", "-C", str(root), "diff", "HEAD", "--binary"],
                               capture_output=True, timeout=30)
@@ -115,7 +131,10 @@ def fingerprint(root, exclude=None):
     for raw in sorted(other.stdout.split(b"\0"))[:5000]:
         if not raw:
             continue
-        path = root / raw.decode("utf-8", "surrogateescape")
+        relative = raw.decode("utf-8", "surrogateescape")
+        if is_cache_path(relative):
+            continue
+        path = root / relative
         if exclude is not None and path.resolve().is_relative_to(exclude):
             continue
         h.update(raw + b"\0")

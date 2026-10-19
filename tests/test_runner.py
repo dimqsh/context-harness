@@ -75,6 +75,26 @@ class Budgets(RunnerBase):
         self.edit("VALUE = 1\n# changed\n")
         self.assertNotIn("refused", self.runner.run(self.check, kind="test"))
 
+    def test_cache_files_written_by_a_run_do_not_hide_an_identical_rerun(self):
+        # CI writes bytecode and tool caches that are not gitignored in the project.
+        script = self.project / "cachey.py"
+        script.write_text(
+            "import os, time\n"
+            "for d in ('tests/__pycache__', '.pytest_cache/v', 'node_modules/.cache'):\n"
+            "    os.makedirs(d, exist_ok=True)\n"
+            "stamp = str(time.time_ns())\n"
+            "for f in ('tests/__pycache__/test_app.cpython-3.pyc', '.pytest_cache/v/lastfailed',\n"
+            "          'node_modules/.cache/x', '.coverage', 'app.pyc'):\n"
+            "    open(f, 'w').write(stamp)\n", encoding="utf-8")
+        subprocess.run(["git", "add", "cachey.py"], cwd=self.project, check=True)
+        subprocess.run(["git", "-c", "user.email=a@b", "-c", "user.name=t", "commit", "-qm", "cachey"],
+                       cwd=self.project, check=True)
+        command = f'"{PY}" cachey.py'
+        self.assertNotIn("refused", self.runner.run(command, kind="test"))
+        self.assertTrue(self.runner.run(command, kind="test")["refused"])
+        (self.project / "notes.txt").write_text("a real untracked change", encoding="utf-8")
+        self.assertNotIn("refused", self.runner.run(command, kind="test"))
+
     def test_repeat_failure_stops_then_override_is_limited_and_recorded(self):
         for i in range(3):
             self.edit(f"VALUE = {i + 2}\n")
