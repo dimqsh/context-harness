@@ -1,0 +1,23 @@
+{
+  "name": "context-harness",
+  "version": "0.5.0-alpha.1",
+  "description": "Experimental: budgeted test runs with a stop-after-green rule, a guard for pre-existing tests, shaped test output and project memory for coding agents (skill, MCP server, hooks).",
+  "author": {
+    "name": "context-harness contributors"
+  },
+  "license": "MIT",
+  "keywords": ["testing", "agents", "mcp", "skill", "hooks", "token-budget"],
+  "skills": "./skills/",
+  "mcpServers": "./.codex-mcp.json",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Context Harness",
+    "shortDescription": "Budgeted test runs, frozen pre-existing tests, project memory",
+    "longDescription": "Experimental harness for coding agents: one start call per task, test and check runs through a budgeted runner with a stop-after-green rule and shaped output, a guard that flags rewritten pre-existing tests, and pointer-based project memory. Token savings are not demonstrated yet.",
+    "developerName": "context-harness contributors",
+    "category": "Coding",
+    "defaultPrompt": [
+      "Use context-harness for this change: start once, run checks through the harness, keep existing tests intact, then report."
+    ]
+  }
+}

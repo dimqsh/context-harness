@@ -1,0 +1,4 @@
+interface:
+  display_name: "Context Harness"
+  short_description: "Budgeted fixes, frozen pre-existing tests, shaped test output, project memory"
+  default_prompt: "Use $context-harness for this change: start once, run checks through the harness, stop when the full check is green, keep existing tests intact, then report."

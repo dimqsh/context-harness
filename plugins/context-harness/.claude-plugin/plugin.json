@@ -1,0 +1,10 @@
+{
+  "name": "context-harness",
+  "version": "0.5.0-alpha.1",
+  "description": "Experimental: budgeted test runs with a stop-after-green rule, a guard for pre-existing tests, shaped test output and project memory for coding agents (skill, MCP server, hooks).",
+  "author": {
+    "name": "context-harness contributors"
+  },
+  "license": "MIT",
+  "keywords": ["testing", "agents", "mcp", "skill", "hooks", "token-budget"]
+}

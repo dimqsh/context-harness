@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "context-harness": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/skills/context-harness/scripts/ch.py", "mcp"]
+    }
+  }
+}

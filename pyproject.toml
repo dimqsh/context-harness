@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "context-harness"
+version = "0.5.0a1"
+description = "Budgeted test runs, a pre-existing-test guard and project memory for coding agents (CLI, skill, MCP server)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = []
+keywords = ["coding-agents", "claude-code", "codex", "mcp", "skill", "testing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.optional-dependencies]
+semantic = ["numpy>=1.26,<3", "tokenizers>=0.21,<0.24", "onnxruntime>=1.23,<1.24", "snowballstemmer==3.0.1"]
+
+[project.scripts]
+context-harness = "context_harness.cli:main"
+context-harness-mcp = "context_harness.cli:mcp_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools.package-data]
+context_harness = [
+    "dashboard.html",
+    "skill_data/LICENSE",
+    "skill_data/*.md",
+    "skill_data/agents/*",
+    "skill_data/references/*",
+    "skill_data/scripts/*",
+]

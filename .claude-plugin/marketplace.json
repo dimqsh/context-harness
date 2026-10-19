@@ -1,0 +1,24 @@
+{
+  "name": "context-harness",
+  "owner": {
+    "name": "context-harness contributors"
+  },
+  "metadata": {
+    "description": "Marketplace for context-harness: budgeted test runs, a pre-existing-test guard and project memory for coding agents.",
+    "version": "0.5.0-alpha.1"
+  },
+  "plugins": [
+    {
+      "name": "context-harness",
+      "description": "Experimental: budgeted test runs with a stop-after-green rule, a guard for pre-existing tests, shaped test output and project memory (skill, MCP server, hooks).",
+      "version": "0.5.0-alpha.1",
+      "author": {
+        "name": "context-harness contributors"
+      },
+      "source": "./plugins/context-harness",
+      "category": "development",
+      "license": "MIT",
+      "keywords": ["testing", "agents", "mcp", "skill", "hooks", "token-budget"]
+    }
+  ]
+}

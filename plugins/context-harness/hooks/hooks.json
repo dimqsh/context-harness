@@ -1,0 +1,28 @@
+{
+  "description": "context-harness: while a task is active, route test/check commands through `run` and block finishing with unjustified rewrites of pre-existing tests. No-ops when no task is active; CONTEXT_HARNESS_HOOKS=off disables them.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/context_harness_hook.py\" pre-tool-use",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/context_harness_hook.py\" stop",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

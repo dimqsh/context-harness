@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is not supported: `run` needs POSIX process groups and a POSIX shell.
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (standard library only)
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+      - name: Committed plugin skill matches src
+        run: python scripts/bundle_skill.py --check
+      - name: Wheel installs and runs in a fresh venv
+        run: |
+          python -m pip install --upgrade build
+          python -m build --wheel --outdir dist
+          python -m venv /tmp/wheel-venv
+          /tmp/wheel-venv/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/wheel-venv/bin/context-harness install --skill /tmp/skill-out --mcp json
+          /tmp/wheel-venv/bin/python -c "import context_harness, sys; print(context_harness.__version__)"
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            | /tmp/wheel-venv/bin/context-harness-mcp | grep -q '"serverInfo"'
