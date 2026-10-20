@@ -174,6 +174,16 @@ assert.equal(derive([timeout]).checks[0].status,'timeout');
         self.assertEqual(budgets['worker']['max_runs'], 5)
         self.assertEqual(budgets['worker']['max_after_green'], 1)
 
+    def test_snapshot_carries_the_agent_roadmap(self):
+        self.assertEqual(build_snapshot(self.store, self.task)['roadmap']['nodes'], [])
+        self.store.assign(self.task, 'worker', 'backend', 'Fix the API', ['src'], 'Контекст', backend='lexical',
+                          branch='wt/api')
+        roadmap = build_snapshot(self.store, self.task)['roadmap']
+        nodes = {n['agent']: n for n in roadmap['nodes']}
+        self.assertEqual(nodes['worker']['parent'], 'coordinator')
+        self.assertEqual(nodes['worker']['branch'], 'wt/api')
+        self.assertIn('totals', roadmap)
+
     def test_unknown_task_rejected_before_server_binds(self):
         with self.assertRaises(ValueError):
             make_server(self.store, 'unknown')

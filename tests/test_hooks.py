@@ -149,6 +149,25 @@ class Stop(HookBase):
             handle.write("\n\ndef test_new():\n    assert True\n")
         self.assertIsNone(self.stop(), "adding tests to an old file is fine")
 
+    def test_stop_imports_the_session_agent_tree_and_tokens(self):
+        from context_harness.agents import roadmap
+        self.start_task()
+        transcript = self.root / "sess.jsonl"
+        transcript.write_text(json.dumps({
+            "type": "assistant", "timestamp": "2026-10-20T10:00:00Z", "sessionId": "sess", "gitBranch": "main",
+            "message": {"id": "m1", "model": "claude-test", "content": [],
+                        "usage": {"input_tokens": 5, "cache_read_input_tokens": 100, "output_tokens": 7}}}) + "\n",
+            encoding="utf-8")
+        self.assertIsNone(hooks.stop({"hook_event_name": "Stop", "cwd": str(self.project),
+                                      "transcript_path": str(transcript)}))
+        node = {n["agent"]: n for n in roadmap(self.store, self.task)["nodes"]}["solver"]
+        self.assertEqual(node["usage"]["input_tokens"], 105)
+        self.assertEqual(node["model"], "claude-test")
+        broken = self.root / "broken.jsonl"
+        broken.write_text("not json\n", encoding="utf-8")
+        self.assertIsNone(hooks.stop({"cwd": str(self.project), "transcript_path": str(broken)}),
+                          "an unreadable transcript never blocks stopping")
+
     def test_rewritten_test_blocks_until_justified(self):
         self.start_task()
         self.rewrite_test()

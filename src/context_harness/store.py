@@ -376,7 +376,10 @@ class Store:
 
     def assign(self, tid, agent, domain, goal, paths, query, backend="decisions", model=None,
                retrieval="lexical", query_variants=None, context_view="index", budget_bytes=12000,
-               budget=None, snapshot_tests=True):
+               budget=None, snapshot_tests=True, parent="coordinator", role=None, branch=None,
+               agent_model=None, node_kind="agent"):
+        """Assign `agent`. It also becomes a node of the task's agent roadmap: by default a child of
+        the implicit `coordinator`; `start` passes node_kind="orchestrator" and parent=None."""
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", agent):
             raise ValueError("Agent name must be 1..64 letters, digits, underscore or hyphen")
         task = self.task(tid)
@@ -386,6 +389,8 @@ class Store:
         found = self.search(query, domain, backend, model, task_id=tid, agent=agent,
                             retrieval=retrieval, query_variants=query_variants)
         domain = domain or "any"
+        from .agents import git_branch
+        branch_name = branch or git_branch(self.project)
         from .context import memory_index, memory_view, require_budget, json_bytes
         if context_view not in ("index", "full", "pointers", "inline"):
             raise ValueError("Context view must be pointers, inline, index or full")
@@ -451,8 +456,17 @@ class Store:
                         (tid, agent, domain, goal, json.dumps(paths), json.dumps(packet, ensure_ascii=False)))
             from .runner import set_budget
             limits = set_budget(con, tid, agent, **(budget or {}))
-            self.emit(con, "agent_assigned", {"agent": agent, "domain": domain,
-                                            "read_only": not paths, "backend": found["backend"]}, tid)
+            from .agents import ensure_schema as ensure_agent_schema, upsert_node
+            ensure_agent_schema(con)
+            if parent and not con.execute("SELECT 1 FROM agent_nodes WHERE task_id=? AND agent=?",
+                                          (tid, parent)).fetchone():
+                upsert_node(con, tid, parent, kind="orchestrator", role="Assigns specialists and verifies results",
+                            branch=branch_name, started=now())
+            upsert_node(con, tid, agent, parent=parent, kind=node_kind, role=role or goal, branch=branch_name,
+                        model=agent_model, started=now())
+            self.emit(con, "agent_assigned", {"agent": agent, "domain": domain, "parent": parent,
+                                            "branch": branch_name, "read_only": not paths,
+                                            "backend": found["backend"]}, tid)
         folder = self.root / "packets" / tid
         folder.mkdir(parents=True, exist_ok=True)
         dest = folder / (agent + ".json")

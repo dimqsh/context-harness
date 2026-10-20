@@ -4,6 +4,31 @@ All notable changes to this project are documented here. Versions follow
 [PEP 440](https://peps.python.org/pep-0440/); the plugin manifests use the same version in semver
 form (`0.5.0a1` is `0.5.0-alpha.1`).
 
+## [Unreleased]
+
+### Added
+
+- Agent roadmap: `start` and `assign` record agents as a tree (`assign --parent/--role/--branch/--agent-model`),
+  with the git branch detected automatically. `import-session` reads Claude Code session transcripts (main
+  agent plus every subagent, nested by who spawned whom), Codex rollout files and `codex exec --json`
+  output; `usage` records tokens by hand; `agents` prints the roadmap. Re-importing a source replaces its
+  numbers. The plugin's `Stop` hook imports the stopping session into the active task.
+- Dashboard: agent roadmap section (node graph of the orchestrator and its agents with curved branch
+  edges, git-branch fork labels and path highlighting; each node shows role, type, branch, model, run
+  time, tool calls, checks and tokens; a timeline; tokens by agent as stacked cached/fresh/output bars
+  with a table view) and a Tokens tile.
+
+### Changed
+
+- Dashboard redesign: task header with acceptance criteria, status tiles with budget and token mini bars,
+  Overview/Agents/Checks/Events tabs (keyboard navigation, URL hash deep links), an event-log filter by
+  kind, and a floating replay player whose track marks each event by outcome.
+
+### Fixed
+
+- The identical-rerun check ignores tool caches (`__pycache__`, `.pytest_cache`, `node_modules/.cache`,
+  `.coverage`, ...) that change on every run where they are not gitignored.
+
 ## [0.5.0a1] - unreleased
 
 First public snapshot. Experimental: no token savings are demonstrated (see README, "Evidence so far").

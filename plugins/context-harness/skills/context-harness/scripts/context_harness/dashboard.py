@@ -20,8 +20,10 @@ def build_snapshot(store, task):
                        for row in con.execute("SELECT * FROM budgets WHERE task_id=?", (task,))}
         except sqlite3.OperationalError:
             budgets = {}
+    from .agents import roadmap
     snapshot.update(
         budgets=budgets,
+        roadmap=roadmap(store, task),
         events=store.events(task),
         memory_stats={"total": sum(counts.values()), "verified": counts.get("verified", 0),
                       "proposed": counts.get("proposed", 0)},

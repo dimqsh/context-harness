@@ -25,7 +25,8 @@ def start(store, *, title, goal, acceptance, query=None, domain=None, agent="sol
     task = store.task_create(title, goal, list(acceptance))["id"]
     assigned = store.assign(task, agent, domain, goal, list(allow_paths), query or f"{title} {goal}",
                             backend=backend, query_variants=variants or [], context_view=view,
-                            budget_bytes=budget_bytes, budget=budget, snapshot_tests=snapshot_tests)
+                            budget_bytes=budget_bytes, budget=budget, snapshot_tests=snapshot_tests,
+                            parent=None, role=goal, node_kind="orchestrator")
     set_current(store, task, agent)
     packet = json.loads(Path(assigned["packet"]).read_text(encoding="utf-8"))
     with store.connect() as con:

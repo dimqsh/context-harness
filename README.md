@@ -120,6 +120,43 @@ independent verification, is in
 [protocol.md](src/context_harness/skill_data/references/protocol.md); budgets and output shaping are in
 [token-budget.md](src/context_harness/skill_data/references/token-budget.md).
 
+## Dashboard and agent roadmap
+
+```sh
+context-harness --project . dashboard TASK_ID        # live, read-only, http://127.0.0.1:<port>
+context-harness --project . export-dashboard TASK_ID --output task.html   # one offline HTML file
+```
+
+The dashboard shows the task, its acceptance criteria and status tiles (verification, checks and run budget,
+test guard, tokens, memory) above four tabs: Overview, Agents, Checks (pass/fail/refused results) and Events
+(the log, filterable by kind). A replay player at the bottom steps through the recorded events, with markers
+coloured by outcome; `#agents`, `#checks` and `#events` in the URL open a tab directly. The Agents tab is the
+**agent roadmap**:
+
+- **Node graph.** The orchestrator and every agent it created as nodes joined by branch edges (who spawned
+  whom), each with what it does, its type, git branch, model, run time, tool calls, checks and tokens. A
+  dashed edge with a branch label marks an agent that forked onto another git branch; hovering a node
+  highlights its path back to the orchestrator.
+- **Timeline.** When each agent was active.
+- **Tokens by agent.** Cached input, fresh input and output, with a table view.
+
+Agents enter the roadmap from `start` (the solver is the orchestrator) and `assign` (children of the
+coordinator, or of `--parent`; `--role`, `--branch` and `--agent-model` describe them). Token usage is never
+estimated; it is imported from what the agent runtimes already write:
+
+```sh
+context-harness --project . import-session --transcript ~/.claude/projects/<project>/<session>.jsonl
+context-harness --project . import-session --transcript ~/.codex/sessions/.../rollout-*.jsonl --agent codex-1
+context-harness --project . usage TASK_ID --agent reviewer --input 120000 --cached 90000 --output 4000
+context-harness --project . agents                   # the roadmap as JSON
+```
+
+A Claude Code session import reads the main transcript and every subagent transcript next to it
+(`<session>/subagents/agent-*.jsonl` with its `.meta.json`), so the tree shows each spawned bot with its
+description and tokens. Codex rollout files (`~/.codex/sessions`) and `codex exec --json` output are read
+the same way. With the plugin installed, the `Stop` hook imports the stopping session into the active
+task automatically. Importing the same source again replaces its numbers instead of adding them.
+
 ## Hooks
 
 Without hooks the protocol is advisory: nothing stops an agent from running `npm test` directly or
@@ -128,7 +165,7 @@ editing an old assertion until it passes. The plugin adds two hooks (`plugins/co
 | Hook | Does |
 |---|---|
 | `PreToolUse` on `Bash` | Denies test and check commands issued outside the harness (`npm test`, `npm run check`, `npx vitest`, `pytest`, `go test`, `cargo test`, `python -m unittest`, `python -m pytest` and close variants such as `yarn test` or `npm run test:unit`) and tells the agent the exact `run` command to use instead. Calls of `ch.py` / `context-harness` pass. |
-| `Stop` | Blocks finishing while `guard` flags rewritten or deleted pre-existing tests that the latest report does not justify with `--test-change "PATH: why"`. After 3 blocks per task it lets the agent stop and shows a warning instead, so it cannot loop forever. |
+| `Stop` | Imports the stopping session's agent tree and token usage into the active task (best effort). Then blocks finishing while `guard` flags rewritten or deleted pre-existing tests that the latest report does not justify with `--test-change "PATH: why"`. After 3 blocks per task it lets the agent stop and shows a warning instead, so it cannot loop forever. |
 
 Both hooks are **no-ops unless a context-harness task is active** for the project: the project state has
 a current task that is not closed and had activity in the last 12 hours
@@ -156,6 +193,9 @@ does not follow scripts, aliases or variables.
 - `run` executes commands the agent chooses, with your environment. Your client's tool approval applies to
   it; `mcp --read-only` removes every tool that runs commands or writes.
 - Memory, logs and retrieved text are treated as untrusted data, never as instructions.
+- `import-session` (and the plugin's `Stop` hook) reads local agent transcripts and stores per-agent
+  metadata in the state database: the first prompt or subagent description (up to 600 characters), branch,
+  model, timestamps, tool-call counts and token totals. It stores no transcript content beyond that.
 
 ## Evidence so far
 

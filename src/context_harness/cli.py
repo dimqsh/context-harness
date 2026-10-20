@@ -111,7 +111,31 @@ def parser():
     q.add_argument("--budget-bytes", type=int, default=12000)
     budget_flags(q)
     q.add_argument("--no-test-snapshot", action="store_true")
+    q.add_argument("--parent", default="coordinator", help="Agent that created this one (roadmap tree)")
+    q.add_argument("--role", help="What this agent does (default: --goal)")
+    q.add_argument("--branch", help="Git branch or worktree it works on (default: current branch)")
+    q.add_argument("--agent-model", help="Model the agent runs on, for the roadmap")
     search_flags(q)
+    q = sub.add_parser("usage", help="Record token usage for an agent by hand")
+    q.add_argument("task")
+    q.add_argument("--agent", required=True)
+    q.add_argument("--input", type=int, required=True, help="All input tokens, cached ones included")
+    q.add_argument("--output", type=int, required=True, help="All output tokens, reasoning included")
+    q.add_argument("--cached", type=int, default=0)
+    q.add_argument("--cache-write", type=int, default=0)
+    q.add_argument("--reasoning", type=int, default=0)
+    q.add_argument("--requests", type=int, default=0)
+    q.add_argument("--model")
+    q.add_argument("--source", default="manual")
+    q = sub.add_parser("import-session", help="Import agents and token usage from a Claude Code or Codex log")
+    q.add_argument("task", nargs="?")
+    q.add_argument("--transcript", type=Path, required=True,
+                   help="Claude Code session .jsonl (subagents are found next to it) or Codex rollout/exec JSONL")
+    q.add_argument("--agent", help="Node name for the main agent (default: the task's current agent)")
+    q.add_argument("--parent", help="Codex only: agent that started this run")
+    q.add_argument("--role", help="Codex only: what this run did")
+    q = sub.add_parser("agents", help="Agent roadmap of a task: tree, branches, models and tokens")
+    q.add_argument("task", nargs="?")
     q = sub.add_parser("checkpoint", help="Resume from current task/checks, without event replay")
     q.add_argument("task")
     q.add_argument("--budget-bytes", type=int, default=12000)
@@ -319,7 +343,28 @@ def main(argv=None):
         elif a.command == "assign":
             result = s.assign(a.task, a.agent, a.domain, a.goal, a.allow_path, a.query,
                               a.backend, a.model, a.retrieval, a.variant, a.context_view, a.budget_bytes,
-                              budget=budget_args(a), snapshot_tests=not a.no_test_snapshot)
+                              budget=budget_args(a), snapshot_tests=not a.no_test_snapshot,
+                              parent=a.parent or None, role=a.role, branch=a.branch, agent_model=a.agent_model)
+        elif a.command == "usage":
+            from .agents import record_manual_usage
+            result = record_manual_usage(s, a.task, a.agent, {
+                "input_tokens": a.input, "cached_input_tokens": a.cached, "cache_write_tokens": a.cache_write,
+                "output_tokens": a.output, "reasoning_tokens": a.reasoning, "requests": a.requests},
+                source=a.source, model=a.model)
+        elif a.command in ("import-session", "agents"):
+            from .agents import import_transcript, roadmap
+            with s.connect() as con:
+                meta = {row[0]: row[1] for row in con.execute(
+                    "SELECT key, value FROM meta WHERE key IN ('current_task','current_agent')")}
+            tid = a.task or meta.get("current_task")
+            if not tid:
+                raise ValueError("Give the task id; there is no current task")
+            agent = getattr(a, "agent", None) or (meta.get("current_agent") if tid == meta.get("current_task") else None) \
+                or "orchestrator"
+            if a.command == "agents":
+                result = {"task": tid, **roadmap(s, tid)}
+            else:
+                result = import_transcript(s, tid, a.transcript, agent, parent=a.parent, role=a.role)
         elif a.command == "checkpoint":
             result = s.checkpoint(a.task, a.budget_bytes)
         elif a.command == "refine-plan":

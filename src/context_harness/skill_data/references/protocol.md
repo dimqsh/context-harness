@@ -14,6 +14,8 @@ What the harness records for you, independent of what an agent claims:
 - Test guard: pre-existing test files whose lines were rewritten or deleted. A `completed` report is refused unless each such file has a `--test-change 'PATH: why'` justification; `report` appends a `harness test-guard:` line. Run `guard --task TASK --run "<test cmd> {files}"` yourself to see whether the original tests pass against the delivered code.
 - `checkpoint TASK` shows each agent's budget (runs left, green, overrides).
 
+Each assignment is also a node of the task's agent roadmap: a child of `coordinator` unless `--parent NAME` names the agent that created it; `--role`, `--branch` (default: the current git branch) and `--agent-model` describe it. Record tokens with `import-session --transcript PATH` (Claude Code session with its subagents, Codex rollout or `codex exec --json` output) or `usage`; the dashboard and `agents TASK` show the tree, timeline and tokens.
+
 After acceptance, `lesson-candidates TASK` drafts reusable lessons from that record (rewritten contracts, tests that needed repeated attempts, unavailable tools). `--apply` stores them as proposed memory; promote with `memory-verify ID --evidence ...` only after checking scope and source. Memory should hold what the repository does not already say.
 
 ## Context packet

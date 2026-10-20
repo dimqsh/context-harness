@@ -304,10 +304,23 @@ def _stop_blocks(active, add=False):
     return count
 
 
+def import_session_usage(active, payload):
+    """Record the agent tree and token usage of the session that is stopping (best effort)."""
+    transcript = payload.get("transcript_path")
+    if not transcript or not Path(transcript).is_file():
+        return None
+    from .agents import import_transcript
+    try:
+        return import_transcript(active["store"], active["task"], transcript, active["agent"])
+    except Exception:  # noqa: BLE001 - usage is informative; never block a stop on it
+        return None
+
+
 def stop(payload):
     active = current_task(payload.get("cwd"))
     if not active:
         return None
+    import_session_usage(active, payload)
     missing = unjustified_test_changes(active)
     if not missing:
         return None
