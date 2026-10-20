@@ -110,6 +110,14 @@ class Roadmap(unittest.TestCase):
         self.assertEqual(info["tool_calls"], 2)
         self.assertEqual(info["spawned"], ["toolu_a"])
 
+    def test_detached_head_in_a_transcript_is_not_a_branch(self):
+        path = self.root / "detached.jsonl"
+        write_jsonl(path, [claude_turn("d1", "2026-10-20T10:00:00Z", 1, 0, 0, 1, branch="HEAD")])
+        self.assertIsNone(parse_claude_transcript(path)["branch"])
+        write_jsonl(path, [claude_turn("d1", "2026-10-20T10:00:00Z", 1, 0, 0, 1, branch="HEAD"),
+                           claude_turn("d2", "2026-10-20T10:01:00Z", 1, 0, 0, 1, branch="fix/y")])
+        self.assertEqual(parse_claude_transcript(path)["branch"], "fix/y")
+
     def test_claude_session_import_builds_the_bot_tree_with_tokens(self):
         tid = start(self.store, title="T", goal="Fix paging", acceptance=["A"])["task"]
         transcript = make_claude_session(self.root)

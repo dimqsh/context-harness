@@ -6,6 +6,11 @@ form (`0.5.0a1` is `0.5.0-alpha.1`).
 
 ## [Unreleased]
 
+### Fixed
+
+- `import-session` no longer records `HEAD` as the git branch of an agent that ran in a detached checkout;
+  such agents have no branch, so the dashboard no longer draws them as forked onto a branch named `HEAD`.
+
 ## [0.5.0a1] - 2026-10-20
 
 First public pre-release. Experimental: no token savings are demonstrated (see README, "Evidence so far").

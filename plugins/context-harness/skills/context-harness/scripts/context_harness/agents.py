@@ -166,8 +166,8 @@ def parse_claude_transcript(path):
                 models[message["model"]] += 1
     info["usage"] = usage
     info["model"] = models.most_common(1)[0][0] if models else None
-    real = [b for b in branches if b and b != "HEAD"]
-    info["branch"] = real[-1] if real else (branches[-1] if branches else None)
+    real = [b for b in branches if b and b != "HEAD"]  # "HEAD" is a detached checkout, not a branch
+    info["branch"] = real[-1] if real else None
     return info
 
 
