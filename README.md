@@ -17,12 +17,6 @@ A harness for coding agents (Claude Code, Codex, any MCP client) that changes co
 
 Python 3.10+, standard library only. The same state and protocol serve the CLI, the skill and the MCP server.
 
-> [!WARNING]
-> **Experimental (0.5.0a1). No token savings are demonstrated.** The only end-to-end run of v0.5 used
-> *more* tokens than plain Codex on the same task (see [Evidence so far](#evidence-so-far)). The fixes made
-> after that run, and the hooks in this repository, have not been measured. Treat it as a tool for
-> bounded, checkable work, not as a cost optimization.
-
 ## Install
 
 The commands below install from [`dimqsh/context-harness`](https://github.com/dimqsh/context-harness).
