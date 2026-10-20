@@ -6,32 +6,9 @@ form (`0.5.0a1` is `0.5.0-alpha.1`).
 
 ## [Unreleased]
 
-### Added
+## [0.5.0a1] - 2026-10-20
 
-- Agent roadmap: `start` and `assign` record agents as a tree (`assign --parent/--role/--branch/--agent-model`),
-  with the git branch detected automatically. `import-session` reads Claude Code session transcripts (main
-  agent plus every subagent, nested by who spawned whom), Codex rollout files and `codex exec --json`
-  output; `usage` records tokens by hand; `agents` prints the roadmap. Re-importing a source replaces its
-  numbers. The plugin's `Stop` hook imports the stopping session into the active task.
-- Dashboard: agent roadmap section (node graph of the orchestrator and its agents with curved branch
-  edges, git-branch fork labels and path highlighting; each node shows role, type, branch, model, run
-  time, tool calls, checks and tokens; a timeline; tokens by agent as stacked cached/fresh/output bars
-  with a table view) and a Tokens tile.
-
-### Changed
-
-- Dashboard redesign: task header with acceptance criteria, status tiles with budget and token mini bars,
-  Overview/Agents/Checks/Events tabs (keyboard navigation, URL hash deep links), an event-log filter by
-  kind, and a floating replay player whose track marks each event by outcome.
-
-### Fixed
-
-- The identical-rerun check ignores tool caches (`__pycache__`, `.pytest_cache`, `node_modules/.cache`,
-  `.coverage`, ...) that change on every run where they are not gitignored.
-
-## [0.5.0a1] - unreleased
-
-First public snapshot. Experimental: no token savings are demonstrated (see README, "Evidence so far").
+First public pre-release. Experimental: no token savings are demonstrated (see README, "Evidence so far").
 
 ### Added
 
@@ -49,12 +26,33 @@ First public snapshot. Experimental: no token savings are demonstrated (see READ
 - `scripts/bundle_skill.py --check`, packaging tests (versions, manifest paths, bundle freshness) and
   GitHub Actions CI on Linux and macOS with Python 3.10–3.12.
 - English version of the comparison protocol in `docs/benchmark-protocol.md`.
+- Agent roadmap: `start` and `assign` record agents as a tree (`assign --parent/--role/--branch/--agent-model`),
+  with the git branch detected automatically. `import-session` reads Claude Code session transcripts (main
+  agent plus every subagent, nested by who spawned whom), Codex rollout files and `codex exec --json`
+  output; `usage` records tokens by hand; `agents` prints the roadmap. Re-importing a source replaces its
+  numbers. The plugin's `Stop` hook imports the stopping session into the active task.
+- Dashboard: agent roadmap section (node graph of the orchestrator and its agents with curved branch
+  edges, git-branch fork labels and path highlighting; each node shows role, type, branch, model, run
+  time, tool calls, checks and tokens; a timeline; tokens by agent as stacked cached/fresh/output bars
+  with a table view) and a Tokens tile.
+- `server.json` for the official MCP registry (`io.github.dimqsh/context-harness`, PyPI package, started
+  with `uvx context-harness mcp`); the README carries the `mcp-name` line the registry checks.
 
 ### Changed
 
 - `SKILL.md`, references and helper scripts live in `src/context_harness/skill_data/`; the plugin's
   skill folder is generated from `src/` and committed.
 - `run` refuses on Windows with a clear error instead of failing midway (it needs POSIX process groups).
+- Dashboard redesign: task header with acceptance criteria, status tiles with budget and token mini bars,
+  Overview/Agents/Checks/Events tabs (keyboard navigation, URL hash deep links), an event-log filter by
+  kind, and a floating replay player whose track marks each event by outcome.
+
+### Fixed
+
+- The identical-rerun check ignores tool caches (`__pycache__`, `.pytest_cache`, `node_modules/.cache`,
+  `.coverage`, ...) that change on every run where they are not gitignored.
+- Dashboard: the agent cards and the checks list no longer share their element ids with the `#agents` and
+  `#checks` tab links.
 
 ### Included from v0.5 development
 

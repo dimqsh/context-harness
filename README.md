@@ -1,5 +1,7 @@
 # context-harness
 
+<!-- mcp-name: io.github.dimqsh/context-harness -->
+
 A harness for coding agents (Claude Code, Codex, any MCP client) that changes code in a repository:
 
 - **Budgeted check runs.** Every test or check goes through `run`. It keeps a countdown (12 runs by
@@ -12,10 +14,19 @@ A harness for coding agents (Claude Code, Codex, any MCP client) that changes co
   refused until each rewrite is justified.
 - **Project memory.** Verified lessons and pointers to current code, delivered only when they look
   relevant; empty context is a normal answer.
+- **Agent roadmap.** A local dashboard shows the orchestrator and every subagent it spawned, with git
+  branch, model, run time and tokens read from Claude Code transcripts and Codex logs.
 - **Installer** for Claude Code, Codex, Cursor, Claude Desktop and Gemini CLI, plus this plugin
   marketplace with hooks for Claude Code and Codex.
 
 Python 3.10+, standard library only. The same state and protocol serve the CLI, the skill and the MCP server.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dimqsh/context-harness/main/docs/images/dashboard-agents-dark.webp">
+  <img alt="The dashboard's Agents tab: the task with its acceptance criteria and status tiles, and a graph of the orchestrator and four subagents, each with its model, git branch, run time and tokens" src="https://raw.githubusercontent.com/dimqsh/context-harness/main/docs/images/dashboard-agents-light.webp">
+</picture>
+
+<sub>The dashboard's Agents tab for a demo task. The task, agents and token numbers are sample data.</sub>
 
 ## Install
 
@@ -113,6 +124,35 @@ A refused run exits with code 75 and says why. The full protocol, including mult
 independent verification, is in
 [protocol.md](src/context_harness/skill_data/references/protocol.md); budgets and output shaping are in
 [token-budget.md](src/context_harness/skill_data/references/token-budget.md).
+
+## How it differs
+
+context-harness bounds how an agent checks its own work and shows what each agent spent on a task. It is
+not mainly a memory system, a permission guard or a cost tracker, and it runs next to those tools.
+
+| Tool | What it does | Relation to context-harness |
+|---|---|---|
+| [claude-mem](https://github.com/thedotmack/claude-mem) | Captures what the agent does in each session, compresses it and injects relevant context into later sessions. | Overlaps on memory only. Memory here is narrower: verified lessons and pointers to current code, returned above a relevance cutoff. The run budget and the test guard are the main work. |
+| [Serena](https://github.com/oraios/serena) | Semantic code retrieval and editing tools over MCP, backed by language servers. | Complementary: Serena helps the agent find and change code; context-harness bounds how it checks the result. |
+| [nah](https://github.com/manuelschipper/nah) | A context-aware guard that blocks dangerous agent tool calls. | Complementary. Both use a `PreToolUse` hook on `Bash`; context-harness only sends test and check commands through `run`. |
+| [ccusage](https://github.com/ccusage/ccusage), [CodeBurn](https://github.com/getagentseal/codeburn) | Token usage and cost from local transcripts, by day and model (ccusage) or by model, project and task (CodeBurn). | Overlaps on reading transcripts. context-harness puts tokens on each agent in the spawn tree of one task, next to that task's checks and test guard. It does not price tokens. |
+
+## Why not just CLAUDE.md?
+
+Keep CLAUDE.md or AGENTS.md for your conventions. Three things here are outside what an instruction file
+can do:
+
+- **Enforce a stop.** An instruction is something the agent may follow. `run` counts runs and refuses with
+  exit code 75 once the budget or the stop rule applies, and the plugin's hooks deny test commands issued
+  outside `run`.
+- **Check old tests.** "Do not modify the tests" does not tell you whether assertions changed. `guard`
+  diffs the snapshot taken at `start`, `guard --run` runs the original tests against the new code, and a
+  `completed` report is refused until each change is justified. In one
+  [public experiment](https://x.com/KevinShengHui/status/2103132319183990952) that sentence in the prompt
+  made little difference to how often agents gamed tests they could not pass. Those runs special-cased
+  code instead of editing tests, which the guard does not catch.
+- **Stay small.** CLAUDE.md is loaded in full every session. Memory here returns pointers to current code
+  and verified lessons only when they match the task, and nothing when nothing matches.
 
 ## Dashboard and agent roadmap
 

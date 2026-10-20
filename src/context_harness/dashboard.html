@@ -399,7 +399,7 @@ details.more[open] summary::before{transform:rotate(45deg)}
         <div class="flow" id="graph" aria-label="Participant states at the selected event">
           <div class="stage" id="memoryNode"><div class="stage-title"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3"/><circle cx="11" cy="11" r="7"/></svg>Context</div><div class="stage-main" id="memoryState"></div><div class="stage-sub" id="memoryDetail"></div></div>
           <div class="arrow" id="contextRail" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div id="agents" class="agents"></div>
+          <div id="agentCards" class="agents"></div>
           <div class="arrow" id="reportRail" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
           <div class="stage" id="mainNode"><div class="stage-title"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>Coordinator</div><div class="stage-main" id="mainState"></div><div class="stage-sub" id="mainDetail"></div><div class="stage-sub" id="verificationDetail"></div></div>
         </div>
@@ -454,7 +454,7 @@ details.more[open] summary::before{transform:rotate(45deg)}
     <div class="card card-pad">
       <div class="card-head"><h2 id="checksTitle"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg>Checks</h2><p id="checksNote"></p></div>
       <div class="stats" id="checksStats"></div>
-      <div class="checks" id="checks"></div>
+      <div class="checks" id="checkList"></div>
     </div>
   </section>
 
@@ -579,8 +579,8 @@ function renderOverview(state,last,data,events,verificationStale){
   text('memoryDetail',state.memory?.type==='search_failed'?(md.error_type||'Search error'):md.query||'Memory is matched to the task query.');
   const searching=['search_started','context_shortlisted','search'].includes(last?.type);
   $('memoryNode').classList.toggle('active',searching);$('contextRail').classList.toggle('active',searching);$('reportRail').classList.toggle('active',last?.type==='agent_reported');$('mainNode').classList.toggle('active',['agent_reported','coordinator_verified'].includes(last?.type));
-  $('agents').replaceChildren();if(!state.agents.size)$('agents').append(el('div','empty','No agents in the log yet'));
-  for(const a of state.agents.values()){const card=el('div','agent '+a.stage+(data.agent===a.name?' active':''));const top=el('div','agent-top');top.append(el('span','agent-name',a.name));const tone=a.stage==='completed'?'pass':a.stage==='failed'?'fail':a.stage==='blocked'?'warn':['running','reviewing','searching','shortlisted','context'].includes(a.stage)?'info':'neutral';const badge=pill(tone,shortStates[a.stage]||a.stage);badge.title=states[a.stage]||a.stage;top.append(badge);card.append(top);card.append(el('div','agent-meta',[a.domain||'any domain',a.checks?a.checks+' check'+(a.checks>1?'s':''):''].filter(Boolean).join(' · ')));if(a.detail)card.append(el('p','agent-detail',a.detail));$('agents').append(card);}
+  $('agentCards').replaceChildren();if(!state.agents.size)$('agentCards').append(el('div','empty','No agents in the log yet'));
+  for(const a of state.agents.values()){const card=el('div','agent '+a.stage+(data.agent===a.name?' active':''));const top=el('div','agent-top');top.append(el('span','agent-name',a.name));const tone=a.stage==='completed'?'pass':a.stage==='failed'?'fail':a.stage==='blocked'?'warn':['running','reviewing','searching','shortlisted','context'].includes(a.stage)?'info':'neutral';const badge=pill(tone,shortStates[a.stage]||a.stage);badge.title=states[a.stage]||a.stage;top.append(badge);card.append(top);card.append(el('div','agent-meta',[a.domain||'any domain',a.checks?a.checks+' check'+(a.checks>1?'s':''):''].filter(Boolean).join(' · ')));if(a.detail)card.append(el('p','agent-detail',a.detail));$('agentCards').append(card);}
   text('mainState',verificationStale?'Re-verification required':state.verification?(state.verification.passed?'Verification passed':'Verification failed'):state.closed?'Task closed':'Awaiting verification');
   text('mainDetail','Reports received: '+state.received);text('verificationDetail',state.verification?.summary||'Verifies results independently.');
   text('currentType',last?'Event '+position+' · '+localTime(last.created):'Start of history');
@@ -596,7 +596,7 @@ function renderChecks(state,last){
   const executed=state.checks.filter(c=>c.status!=='refused');const passed=executed.filter(c=>c.status==='pass').length;const limits=Object.values(snapshot.budgets||{})[0];
   $('checksStats').replaceChildren();
   for(const [value,label] of [[executed.length,'executed'],[passed,'passed'],[executed.length-passed,'failed'],[state.refused,'refused'],[state.overrides,'overrides']].concat(limits?[[Math.max(0,limits.max_runs-executed.filter(c=>c.kind!=='other').length)+' / '+limits.max_runs,'runs left']]:[])){const s=el('div','stat');s.append(el('b','',String(value)),el('span','',label));$('checksStats').append(s);}
-  $('checks').replaceChildren();if(!state.checks.length)$('checks').append(el('div','empty','No checks recorded up to this event'));state.checks.forEach((c,i)=>$('checks').append(checkRow(c,i,last)));
+  $('checkList').replaceChildren();if(!state.checks.length)$('checkList').append(el('div','empty','No checks recorded up to this event'));state.checks.forEach((c,i)=>$('checkList').append(checkRow(c,i,last)));
   text('checksNote',state.green?'full check green at #'+state.green:'');
 }
 function renderJournal(events){
